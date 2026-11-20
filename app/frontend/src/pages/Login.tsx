@@ -6,7 +6,7 @@ import { getServerBaseUrl, setServerBaseUrl } from "../api/client";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [serverUrl, setServerUrl] = useState(getServerBaseUrl());
+  const [serverUrl, setServerUrl] = useState(getServerBaseUrl() || (window.location.hostname === "tauri.localhost" ? "http://127.0.0.1:8000" : ""));
   const [connectionMessage, setConnectionMessage] = useState("");
   const isNativeClient = window.location.hostname === "localhost" || window.location.hostname === "tauri.localhost";
   const [error, setError] = useState("");
