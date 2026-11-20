@@ -38,6 +38,8 @@ app.include_router(admin_control.router)
 
 @app.on_event("startup")
 def on_startup():
+    if len(settings.JWT_SECRET) < 32 or settings.JWT_SECRET == "please-change-this-secret":
+        raise RuntimeError("Set a unique JWT_SECRET of at least 32 characters in app/backend/.env before starting.")
     # Create core ORM tables, then apply versioned operational/admin migrations.
     Base.metadata.create_all(bind=engine)
     backend_dir = Path(__file__).resolve().parents[1]
@@ -52,6 +54,8 @@ def on_startup():
         db = SessionLocal()
         try:
             if db.query(models.User).count() == 0:
+                if not settings.INITIAL_ADMIN_PASSWORD:
+                    raise RuntimeError("Set INITIAL_ADMIN_PASSWORD in app/backend/.env for the first administrator.")
                 db.add(models.User(
                     username=settings.INITIAL_ADMIN_USERNAME,
                     full_name=settings.INITIAL_ADMIN_FULL_NAME,
