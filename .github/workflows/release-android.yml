@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: royal-skye-android-release-\${{ github.ref }}
+  group: royal-skye-android-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -65,17 +65,17 @@ jobs:
           ./gradlew assembleDebug
       - name: Prepare versioned release asset
         run: |
-          cp app/frontend/android/app/build/outputs/apk/debug/app-debug.apk "Royal-Skye-v\${{ steps.version.outputs.version }}-android-debug.apk"
+          cp app/frontend/android/app/build/outputs/apk/debug/app-debug.apk "Royal-Skye-v${{ steps.version.outputs.version }}-android-debug.apk"
       - name: Publish private GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v\${{ steps.version.outputs.version }}
-          name: Royal Skye v\${{ steps.version.outputs.version }}
-          target_commitish: \${{ github.sha }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Royal Skye v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
           prerelease: true
           generate_release_notes: true
           body: |
-            Royal Skye Restaurant Android v\${{ steps.version.outputs.version }}.
+            Royal Skye Restaurant Android v${{ steps.version.outputs.version }}.
 
             This first APK is debug-signed for early installation and acceptance testing. A permanent owner-controlled signing key is required before production updates can be installed over this build. Do not use for live billing until local host, authentication, offline recovery, migration and printer acceptance tests pass.
-          files: Royal-Skye-v\${{ steps.version.outputs.version }}-android-debug.apk
+          files: Royal-Skye-v${{ steps.version.outputs.version }}-android-debug.apk
