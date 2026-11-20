@@ -1,0 +1,12 @@
+**/.env
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+app/frontend/node_modules/
+app/frontend/dist/
+app/frontend/android/
+app/frontend/src-tauri/target/
+*.keystore
+*.jks
+*.p12
+*.pfx
