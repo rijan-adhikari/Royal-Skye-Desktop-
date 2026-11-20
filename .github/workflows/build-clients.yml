@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "app/frontend/**"
+      - "app/VERSION"
       - ".github/workflows/build-clients.yml"
 
 permissions:
