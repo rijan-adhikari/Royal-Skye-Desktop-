@@ -4,7 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg2://royalskye:changeme@localhost:5432/royalskye_pos"
-    JWT_SECRET: str = "please-change-this-secret"
+    JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
     CORS_ORIGINS: str = "http://localhost:5173,http://tauri.localhost,tauri://localhost,http://localhost,https://localhost,capacitor://localhost"
