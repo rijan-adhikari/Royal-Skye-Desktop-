@@ -81,6 +81,21 @@ jobs:
           xml = xml.replace("<application", '<application android:usesCleartextTraffic="true"', 1)
           manifest.write_text(xml)
           PY
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          version = Path("../VERSION").read_text().splitlines()[0].strip()
+          major, minor, patch = (int(part) for part in version.split("."))
+          version_code = major * 10000 + minor * 100 + patch
+          gradle = Path("android/app/build.gradle")
+          content = gradle.read_text()
+          content, code_count = re.subn(r"versionCode\\s+\\d+", f"versionCode {version_code}", content, count=1)
+          content, name_count = re.subn(r'versionName\\s+"[^"]+"', f'versionName "{version}"', content, count=1)
+          if code_count != 1 or name_count != 1:
+              raise SystemExit("Could not safely set Android versionCode/versionName")
+          gradle.write_text(content)
+          print(f"Android versionName={version}, versionCode={version_code}")
+          PY
       - name: Build installable debug APK
         run: |
           cd android
