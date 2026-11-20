@@ -71,6 +71,13 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+          python - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          xml = manifest.read_text()
+          xml = xml.replace("<application", '<application android:usesCleartextTraffic="true"', 1)
+          manifest.write_text(xml)
+          PY
       - name: Build installable debug APK
         run: |
           cd android
