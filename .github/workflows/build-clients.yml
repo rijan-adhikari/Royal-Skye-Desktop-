@@ -9,6 +9,10 @@ on:
       - "app/VERSION"
       - ".github/workflows/build-clients.yml"
 
+concurrency:
+  group: royal-skye-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
