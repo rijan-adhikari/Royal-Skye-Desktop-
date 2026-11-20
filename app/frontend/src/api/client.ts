@@ -1,10 +1,45 @@
 import axios from "axios";
 
-// The production container serves the UI and proxies /api to FastAPI.
-// Vite development uses the same relative URL through its dev-server proxy.
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? "";
+function normalizeBaseUrl(value: string) {
+  return value.trim().replace(/\\/+$/, "");
+}
 
-export const api = axios.create({ baseURL });
+export function getServerBaseUrl() {
+  try {
+    return window.localStorage.getItem("royal-skye-server-url") || import.meta.env.VITE_API_BASE_URL || "";
+  } catch {
+    return import.meta.env.VITE_API_BASE_URL || "";
+  }
+}
+
+const initialBaseUrl = getServerBaseUrl();
+export const api = axios.create({ baseURL: initialBaseUrl });
+
+function websocketUrl(baseUrl: string) {
+  if (baseUrl) {
+    const parsed = new URL(baseUrl);
+    return `${parsed.protocol === "https:" ? "wss:" : "ws:"}//${parsed.host}`;
+  }
+  const socketProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${socketProtocol}//${window.location.host}`;
+}
+
+export let wsBaseUrl = websocketUrl(initialBaseUrl);
+
+export function setServerBaseUrl(value: string) {
+  const normalized = normalizeBaseUrl(value);
+  if (normalized) {
+    const parsed = new URL(normalized);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new Error("Server address must begin with http:// or https://");
+    }
+    window.localStorage.setItem("royal-skye-server-url", normalized);
+  } else {
+    window.localStorage.removeItem("royal-skye-server-url");
+  }
+  api.defaults.baseURL = normalized;
+  wsBaseUrl = websocketUrl(normalized);
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -17,15 +52,13 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("fullName");
       window.location.href = "/login";
     }
     return Promise.reject(err);
   }
 );
-
-const socketProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-export const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || `${socketProtocol}//${window.location.host}`;
-
 
 export function apiErrorMessage(error: any, fallback = "The request failed.") {
   const response = error?.response;
@@ -35,6 +68,6 @@ export function apiErrorMessage(error: any, fallback = "The request failed.") {
     : typeof detail === "string" ? detail : detail ? JSON.stringify(detail) : "";
   if (detailText) return detailText;
   if (response) return `${fallback} (HTTP ${response.status}${response.statusText ? `: ${response.statusText}` : ""}).`;
-  if (error?.request) return `${fallback} No response from the server; check that the backend and API proxy are running.`;
+  if (error?.request) return `${fallback} No response from the server; check the server address and confirm the restaurant host is running.`;
   return error?.message || fallback;
 }
