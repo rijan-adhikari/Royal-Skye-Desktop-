@@ -1,3 +1,3 @@
 1.0.0
 # First test release; APK is debug-signed.
-# Android versionCode and versionName are set by CI.
+# Android package version metadata is generated from this file.
