@@ -10,7 +10,7 @@ on:
       - ".github/workflows/build-clients.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   desktop:
@@ -92,3 +92,36 @@ jobs:
           path: app/frontend/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+  release-android:
+    name: Publish versioned Android APK release
+    needs: android
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Release Royal Skye v')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read application version
+        id: version
+        run: echo "version=$(cat app/VERSION | tr -d '\\n')" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: royal-skye-android-debug-apk
+          path: release-assets
+      - name: Rename APK for release
+        run: |
+          APK="$(find release-assets -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          mv "$APK" "Royal-Skye-v${{ steps.version.outputs.version }}-android-debug.apk"
+      - name: Publish private GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Royal Skye v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            Royal Skye Restaurant client v${{ steps.version.outputs.version }}.
+
+            Android APK is debug-signed for early installation and testing. This is not the permanent production signing identity. Do not use it for live billing until local host, authentication, offline recovery, migration and printer acceptance tests pass.
+          files: Royal-Skye-v${{ steps.version.outputs.version }}-android-debug.apk
