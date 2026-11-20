@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getServerBaseUrl, setServerBaseUrl } from "../api/client";
+import { api, getServerBaseUrl, setServerBaseUrl } from "../api/client";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [serverUrl, setServerUrl] = useState(getServerBaseUrl() || (window.location.hostname === "tauri.localhost" ? "http://127.0.0.1:8000" : ""));
   const [connectionMessage, setConnectionMessage] = useState("");
+  const [testingConnection, setTestingConnection] = useState(false);
   const isNativeClient = window.location.hostname === "localhost" || window.location.hostname === "tauri.localhost";
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -19,6 +20,24 @@ export default function Login() {
       setConnectionMessage(serverUrl.trim() ? "Restaurant server address saved." : "Using the default server address.");
     } catch (err) {
       setConnectionMessage(err instanceof Error ? err.message : "Enter a valid server URL.");
+    }
+  };
+
+  const testConnection = async () => {
+    setTestingConnection(true);
+    setConnectionMessage("");
+    try {
+      setServerBaseUrl(serverUrl);
+      const response = await api.get("/api/health", { timeout: 8000 });
+      if (response.data?.status !== "ok" || response.data?.database !== "connected") {
+        throw new Error("The host responded, but its database is not ready.");
+      }
+      setConnectionMessage("Restaurant host and database are online. You can sign in.");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setConnectionMessage(typeof detail === "string" ? detail : err?.message || "Could not reach the restaurant host. Check its IP address and make sure both devices share the same LAN.");
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -211,7 +230,7 @@ export default function Login() {
                     <button type="button" onClick={saveServer} className="rounded-lg border border-[#65e6c2]/35 px-3 text-[9px] font-bold tracking-[.08em] text-[#65e6c2] hover:bg-[#65e6c2]/10">SAVE</button>
                   </div>
                   <p className="mt-2 text-[9px] leading-4 text-[#78908c]">Enter the local IP address shown on the restaurant host PC. Both devices must be on the same private Wi-Fi/LAN.</p>
-                  {connectionMessage && <p role="status" className="mt-1 text-[9px] text-[#65e6c2]">{connectionMessage}</p>}
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><p role="status" className="min-w-0 flex-1 text-[9px] leading-4 text-[#65e6c2]">{connectionMessage || "Test the host before signing in to confirm the local database is ready."}</p><button type="button" disabled={testingConnection} onClick={testConnection} className="rounded-lg bg-[#65e6c2]/10 px-3 py-2 text-[9px] font-bold tracking-[.08em] text-[#65e6c2] disabled:opacity-50">{testingConnection ? "TESTING…" : "TEST CONNECTION"}</button></div>
                 </div>
               )}
               {error && <p role="alert" className="mb-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-xs text-red-300">{error}</p>}
