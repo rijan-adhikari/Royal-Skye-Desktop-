@@ -1,13 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getServerBaseUrl, setServerBaseUrl } from "../api/client";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [serverUrl, setServerUrl] = useState(getServerBaseUrl());
+  const [connectionMessage, setConnectionMessage] = useState("");
+  const isNativeClient = window.location.hostname === "localhost" || window.location.hostname === "tauri.localhost";
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const saveServer = () => {
+    try {
+      setServerBaseUrl(serverUrl);
+      setConnectionMessage(serverUrl.trim() ? "Restaurant server address saved." : "Using the default server address.");
+    } catch (err) {
+      setConnectionMessage(err instanceof Error ? err.message : "Enter a valid server URL.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +203,17 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
               />
+              {isNativeClient && (
+                <div className="mb-5 rounded-xl border border-[#65e6c2]/15 bg-[#65e6c2]/[.045] p-3">
+                  <label htmlFor="rs-server-url" className="mb-2 block text-[9px] font-semibold tracking-[.14em] text-[#9fb9b1]">RESTAURANT SERVER ADDRESS</label>
+                  <div className="flex gap-2">
+                    <input id="rs-server-url" inputMode="url" autoCapitalize="none" autoCorrect="off" className="rs-login-input min-w-0 flex-1 rounded-lg px-3 py-2 text-xs" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://192.168.1.10:8000" />
+                    <button type="button" onClick={saveServer} className="rounded-lg border border-[#65e6c2]/35 px-3 text-[9px] font-bold tracking-[.08em] text-[#65e6c2] hover:bg-[#65e6c2]/10">SAVE</button>
+                  </div>
+                  <p className="mt-2 text-[9px] leading-4 text-[#78908c]">Enter the local IP address shown on the restaurant host PC. Both devices must be on the same private Wi-Fi/LAN.</p>
+                  {connectionMessage && <p role="status" className="mt-1 text-[9px] text-[#65e6c2]">{connectionMessage}</p>}
+                </div>
+              )}
               {error && <p role="alert" className="mb-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-xs text-red-300">{error}</p>}
               <button type="submit" className="rs-login-button w-full rounded-xl py-3 text-xs font-extrabold tracking-[.13em]">
                 ACCESS WORKSPACE <span className="ml-2" aria-hidden="true">↗</span>
