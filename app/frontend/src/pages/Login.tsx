@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { api, getServerBaseUrl, setServerBaseUrl } from "../api/client";
+import { api, apiErrorMessage, getServerBaseUrl, setServerBaseUrl } from "../api/client";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -47,8 +47,9 @@ export default function Login() {
     try {
       await login(username, password);
       navigate("/dashboard");
-    } catch {
-      setError("Invalid username or password");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      setError(status === 401 ? "Invalid username or password." : apiErrorMessage(err, "Could not sign in to Royal Skye."));
     }
   };
 
