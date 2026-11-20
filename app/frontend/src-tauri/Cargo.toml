@@ -1,6 +1,6 @@
 [package]
 name = "royal-skye"
-version = "0.1.0"
+version = "1.0.0"
 description = "Royal Skye Restaurant POS"
 authors = ["Royal Skye"]
 edition = "2021"
