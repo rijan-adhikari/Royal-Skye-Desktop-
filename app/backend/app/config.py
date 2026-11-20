@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "please-change-this-secret"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
-    CORS_ORIGINS: str = "http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,http://tauri.localhost,tauri://localhost,http://localhost,https://localhost,capacitor://localhost"
     INITIAL_ADMIN_USERNAME: str = "admin"
     INITIAL_ADMIN_PASSWORD: str = ""
     INITIAL_ADMIN_FULL_NAME: str = "Royal Skye Administrator"
