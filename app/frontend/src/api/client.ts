@@ -1,7 +1,7 @@
 import axios from "axios";
 
 function normalizeBaseUrl(value: string) {
-  return value.trim().replace(/\\/+$/, "");
+  return value.trim().replace(/\/+$/, "");
 }
 
 export function getServerBaseUrl() {
