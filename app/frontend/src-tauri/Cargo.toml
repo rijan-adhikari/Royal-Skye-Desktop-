@@ -1,0 +1,12 @@
+[package]
+name = "royal-skye"
+version = "0.1.0"
+description = "Royal Skye Restaurant POS"
+authors = ["Royal Skye"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
