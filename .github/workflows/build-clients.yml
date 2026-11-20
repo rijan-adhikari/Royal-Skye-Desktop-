@@ -102,7 +102,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Read application version
         id: version
-        run: echo "version=$(cat app/VERSION | tr -d '\\n')" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(head -n1 app/VERSION)" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
         with:
           name: royal-skye-android-debug-apk
