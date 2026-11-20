@@ -38,7 +38,7 @@ app.include_router(admin_control.router)
 
 @app.on_event("startup")
 def on_startup():
-    if len(settings.JWT_SECRET) < 32 or settings.JWT_SECRET == "please-change-this-secret":
+    if len(settings.JWT_SECRET) < 32 or settings.JWT_SECRET == "please-change-this-secret" or settings.JWT_SECRET.startswith("GENERATE_"):
         raise RuntimeError("Set a unique JWT_SECRET of at least 32 characters in app/backend/.env before starting.")
     # Create core ORM tables, then apply versioned operational/admin migrations.
     Base.metadata.create_all(bind=engine)
