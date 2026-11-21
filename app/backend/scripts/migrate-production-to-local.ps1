@@ -39,6 +39,25 @@ function Get-PublicTableCounts([string]$PsqlPath) {
   return $counts
 }
 
+function Get-FinancialChecks([string]$PsqlPath) {
+  $queries = [ordered]@{
+    orders_count = 'SELECT COUNT(*) FROM orders'
+    bills_count = 'SELECT COUNT(*) FROM bills'
+    active_sales_total = "SELECT COALESCE(SUM(grand_total), 0)::numeric(18,2) FROM bills WHERE sale_status = 'active'"
+    expenses_count = 'SELECT COUNT(*) FROM expenses'
+    expenses_total = 'SELECT COALESCE(SUM(amount), 0)::numeric(18,2) FROM expenses'
+    payments_total = 'SELECT COALESCE(SUM(amount), 0)::numeric(18,2) FROM payments'
+    outstanding_total = 'SELECT COALESCE(SUM(outstanding_amount), 0)::numeric(18,2) FROM bills'
+  }
+  $values = @{}
+  foreach ($name in $queries.Keys) {
+    $value = (& $PsqlPath -X -v ON_ERROR_STOP=1 -A -t -c $queries[$name]) -join ''
+    if ($LASTEXITCODE -ne 0) { throw "Could not calculate reconciliation value $name." }
+    $values[$name] = $value.Trim()
+  }
+  return $values
+}
+
 $pgDump = Get-Command pg_dump -ErrorAction SilentlyContinue
 $pgRestore = Get-Command pg_restore -ErrorAction SilentlyContinue
 $psql = Get-Command psql -ErrorAction SilentlyContinue
@@ -74,6 +93,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'The downloaded PostgreSQL snapshot failed its archive integrity check.' }
   $hash = (Get-FileHash -Algorithm SHA256 $dumpPath).Hash
   $sourceCounts = Get-PublicTableCounts $psql.Source
+  $sourceFinancial = Get-FinancialChecks $psql.Source
 
   Write-Host '2/5  Verifying that the local destination is empty...' -ForegroundColor Yellow
   Set-PostgresEnvironment $targetUrl 'disable'
@@ -88,6 +108,7 @@ try {
 
   Write-Host '4/5  Reconciling source and restored table row counts...' -ForegroundColor Yellow
   $targetCounts = Get-PublicTableCounts $psql.Source
+  $targetFinancial = Get-FinancialChecks $psql.Source
   $allTables = @($sourceCounts.Keys + $targetCounts.Keys | Sort-Object -Unique)
   $mismatches = @()
   $lines = @(
@@ -104,9 +125,17 @@ try {
     $lines += "$table | source=$sourceCount | local=$targetCount"
     if ($sourceCount -ne $targetCount) { $mismatches += "$table (source=$sourceCount, local=$targetCount)" }
   }
+  $lines += ''
+  $lines += 'Financial and operational totals:'
+  foreach ($name in $sourceFinancial.Keys) {
+    $sourceValue = $sourceFinancial[$name]
+    $targetValue = $targetFinancial[$name]
+    $lines += "$name | source=$sourceValue | local=$targetValue"
+    if ($sourceValue -ne $targetValue) { $mismatches += "$name (source=$sourceValue, local=$targetValue)" }
+  }
   if ($mismatches.Count -gt 0) {
     $lines += ''
-    $lines += 'RECONCILIATION FAILED. Source writes may have occurred during the snapshot. Do not cut over.'
+    $lines += 'RECONCILIATION FAILED. Source writes or data differences may have occurred during the snapshot. Do not cut over.'
     $lines | Set-Content -Encoding UTF8 $reportPath
     throw ("Row counts differ. Pause writes and repeat the snapshot. " + ($mismatches -join '; '))
   }
