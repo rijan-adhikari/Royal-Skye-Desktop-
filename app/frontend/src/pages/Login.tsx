@@ -45,6 +45,10 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
+      if (isNativeClient) {
+        if (!serverUrl.trim()) throw new Error("Enter the restaurant host HTTPS address before signing in.");
+        setServerBaseUrl(serverUrl);
+      }
       await login(username, password);
       navigate("/dashboard");
     } catch (err: any) {
