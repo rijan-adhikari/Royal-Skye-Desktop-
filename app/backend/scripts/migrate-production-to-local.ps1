@@ -26,6 +26,19 @@ function Set-PostgresEnvironment([string]$ConnectionUrl, [string]$DefaultSslMode
   if (-not $env:PGDATABASE) { throw 'Connection URL is missing the database name.' }
 }
 
+function Get-PublicTableCounts([string]$PsqlPath) {
+  $names = @(& $PsqlPath -X -v ON_ERROR_STOP=1 -A -t -c "SELECT quote_ident(table_name) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name")
+  if ($LASTEXITCODE -ne 0) { throw 'Could not list public tables for reconciliation.' }
+  $counts = @{}
+  foreach ($table in $names) {
+    if (-not $table) { continue }
+    $countText = (& $PsqlPath -X -v ON_ERROR_STOP=1 -A -t -c "SELECT COUNT(*) FROM public.$table") -join ''
+    if ($LASTEXITCODE -ne 0) { throw "Could not count table $table." }
+    $counts[$table] = $countText.Trim()
+  }
+  return $counts
+}
+
 $pgDump = Get-Command pg_dump -ErrorAction SilentlyContinue
 $pgRestore = Get-Command pg_restore -ErrorAction SilentlyContinue
 $psql = Get-Command psql -ErrorAction SilentlyContinue
@@ -60,6 +73,7 @@ try {
   & $pgRestore.Source --list $dumpPath | Out-Null
   if ($LASTEXITCODE -ne 0) { throw 'The downloaded PostgreSQL snapshot failed its archive integrity check.' }
   $hash = (Get-FileHash -Algorithm SHA256 $dumpPath).Hash
+  $sourceCounts = Get-PublicTableCounts $psql.Source
 
   Write-Host '2/5  Verifying that the local destination is empty...' -ForegroundColor Yellow
   Set-PostgresEnvironment $targetUrl 'disable'
@@ -72,26 +86,35 @@ try {
   & $pgRestore.Source --single-transaction --exit-on-error --no-owner --no-acl --dbname=$env:PGDATABASE $dumpPath
   if ($LASTEXITCODE -ne 0) { throw 'Restore failed. The destination transaction was rolled back; source data is unchanged.' }
 
-  Write-Host '4/5  Counting restored tables for the migration report...' -ForegroundColor Yellow
-  $tables = @(& $psql.Source -X -v ON_ERROR_STOP=1 -A -t -c "SELECT quote_ident(table_name) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name")
-  if ($LASTEXITCODE -ne 0) { throw 'Restore completed but table-count verification failed.' }
+  Write-Host '4/5  Reconciling source and restored table row counts...' -ForegroundColor Yellow
+  $targetCounts = Get-PublicTableCounts $psql.Source
+  $allTables = @($sourceCounts.Keys + $targetCounts.Keys | Sort-Object -Unique)
+  $mismatches = @()
   $lines = @(
     'Royal Skye copy-only migration report',
     "Created: $(Get-Date -Format o)",
     "Dump SHA256: $hash",
     "Destination: $($env:PGHOST):$($env:PGPORT)/$($env:PGDATABASE)",
     '',
-    'Restored table row counts:'
+    'Table row counts (source snapshot check vs local restore):'
   )
-  foreach ($table in $tables) {
-    if (-not $table) { continue }
-    $countText = (& $psql.Source -X -v ON_ERROR_STOP=1 -A -t -c "SELECT COUNT(*) FROM public.$table") -join ''
-    if ($LASTEXITCODE -ne 0) { throw "Could not count restored table $table." }
-    $lines += "$table | $countText"
+  foreach ($table in $allTables) {
+    $sourceCount = $sourceCounts[$table]
+    $targetCount = $targetCounts[$table]
+    $lines += "$table | source=$sourceCount | local=$targetCount"
+    if ($sourceCount -ne $targetCount) { $mismatches += "$table (source=$sourceCount, local=$targetCount)" }
   }
+  if ($mismatches.Count -gt 0) {
+    $lines += ''
+    $lines += 'RECONCILIATION FAILED. Source writes may have occurred during the snapshot. Do not cut over.'
+    $lines | Set-Content -Encoding UTF8 $reportPath
+    throw ("Row counts differ. Pause writes and repeat the snapshot. " + ($mismatches -join '; '))
+  }
+  $lines += ''
+  $lines += 'RECONCILIATION PASSED: public table row counts match.'
   $lines | Set-Content -Encoding UTF8 $reportPath
 
-  Write-Host '5/5  Migration snapshot restored and report written.' -ForegroundColor Green
+  Write-Host '5/5  Migration snapshot restored and row counts reconciled.' -ForegroundColor Green
   Write-Host "Backup: $dumpPath"
   Write-Host "Report: $reportPath"
   Write-Host 'The source website database was never modified.'
