@@ -11,4 +11,11 @@ if (-not (Test-Path 'certs\server.crt') -or -not (Test-Path 'certs\server.key'))
   Write-Host 'LAN TLS certificate missing. Run: py scripts\generate-lan-tls.py --ip YOUR-HOST-LAN-IP' -ForegroundColor Yellow
   exit 1
 }
+$account = "$($env:USERDOMAIN)\$($env:USERNAME)"
+foreach ($keyFile in @('certs\royal-skye-local-ca.key', 'certs\server.key')) {
+  if (Test-Path $keyFile) {
+    & icacls $keyFile /inheritance:r /grant:r "$($account):(F)" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Could not restrict access to $keyFile." }
+  }
+}
 & .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8443 --ssl-certfile certs\server.crt --ssl-keyfile certs\server.key
