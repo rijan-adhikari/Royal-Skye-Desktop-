@@ -146,6 +146,19 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+      - name: Verify APK signature and package metadata
+        working-directory: app/frontend/android
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BUILD_TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          test -s "$APK"
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/royal-skye-apk-badging.txt
+          grep -q "package: name='com.royalskye.restaurant'" /tmp/royal-skye-apk-badging.txt
+          grep -q "sdkVersion:'23'" /tmp/royal-skye-apk-badging.txt
+          sha256sum "$APK" | tee "$GITHUB_WORKSPACE/royal-skye-apk.sha256"
       - uses: actions/upload-artifact@v4
         with:
           name: royal-skye-android-debug-apk
