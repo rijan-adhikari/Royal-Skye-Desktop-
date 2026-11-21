@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type Section = "Overview" | "Tables" | "POS" | "Billing" | "Menu" | "Inventory" | "Customers" | "Expenses" | "Reports" | "Admin";
 type Item = { id:number; name:string; category:string; price:number; stock:number };
@@ -9,6 +10,7 @@ const initialMenu:Item[]=[
 const nav:Section[]=["Overview","Tables","POS","Billing","Menu","Inventory","Customers","Expenses","Reports","Admin"];
 const money=(n:number)=>"Rs. "+n.toLocaleString("en-IN");
 export default function DemoExperience(){
+ const navigate=useNavigate();
  const [section,setSection]=useState<Section>("Overview");
  const [menu,setMenu]=useState<Item[]>(initialMenu);
  const [cart,setCart]=useState<Record<number,number>>({});
@@ -35,7 +37,7 @@ export default function DemoExperience(){
  return <div className="min-h-screen bg-[#070c0e] text-[#e8f0ec]">
   <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#233b39] bg-[#091114]/95 px-4 py-3 backdrop-blur-xl">
    <div className="flex items-center gap-3"><button className="rounded-lg border border-[#29413f] px-3 py-2 lg:hidden" onClick={()=>setShowNav(!showNav)}>☰</button><div><p className="text-[10px] font-black tracking-[.2em] text-[#e0bd8b]">ROYAL SKYE</p><p className="text-[9px] tracking-[.16em] text-[#81958f]">RESTAURANT & BAR · DEMO</p></div></div>
-   <div className="text-right"><p className="text-xs font-bold">Demo Manager</p><p className="text-[10px] text-[#6fd4b5]">● Local preview</p></div>
+   <div className="flex items-center gap-3"><button onClick={()=>navigate("/login")} className="rounded-lg border border-[#c69a67]/50 bg-[#c69a67]/10 px-3 py-2 text-[10px] font-bold text-[#e3bd8c] transition hover:bg-[#c69a67]/20"><span className="hidden sm:inline">Connect to restaurant</span><span className="sm:hidden">Connect</span></button><div className="text-right"><p className="text-xs font-bold">Demo Manager</p><p className="text-[10px] text-[#6fd4b5]">● Local preview</p></div></div>
   </header>
   <div className="mx-auto grid max-w-[1440px] lg:grid-cols-[220px_1fr]">
    <aside className={(showNav?"block":"hidden")+" border-r border-[#1e3332] p-3 lg:block lg:min-h-[calc(100vh-57px)]"}>
