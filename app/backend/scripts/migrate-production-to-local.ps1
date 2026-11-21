@@ -69,7 +69,7 @@ try {
   if ($tableCount -ne 0) { throw "Destination is not empty ($tableCount public tables). No restore was attempted. Create a new empty database instead." }
 
   Write-Host '3/5  Restoring into the empty local database (single transaction; no source writes)...' -ForegroundColor Yellow
-  & $pgRestore.Source --single-transaction --exit-on-error --no-owner --no-acl $dumpPath
+  & $pgRestore.Source --single-transaction --exit-on-error --no-owner --no-acl --dbname=$env:PGDATABASE $dumpPath
   if ($LASTEXITCODE -ne 0) { throw 'Restore failed. The destination transaction was rolled back; source data is unchanged.' }
 
   Write-Host '4/5  Counting restored tables for the migration report...' -ForegroundColor Yellow
