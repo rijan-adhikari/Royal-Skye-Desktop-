@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Capacitor } from "@capacitor/core";
 
 function normalizeBaseUrl(value: string) {
   return value.trim().replace(/\/+$/, "");
@@ -32,6 +33,9 @@ export function setServerBaseUrl(value: string) {
     const parsed = new URL(normalized);
     if (!["http:", "https:"].includes(parsed.protocol)) {
       throw new Error("Server address must begin with http:// or https://");
+    }
+    if (Capacitor.getPlatform() === "android" && parsed.protocol !== "https:") {
+      throw new Error("Android requires trusted HTTPS. Install the Royal Skye local CA certificate, then use https://HOST-IP:8443.");
     }
     window.localStorage.setItem("royal-skye-server-url", normalized);
   } else {
