@@ -128,26 +128,23 @@ jobs:
           
           adaptive = root / "mipmap-anydpi-v26"
           adaptive.mkdir(parents=True, exist_ok=True)
-          (adaptive / "ic_launcher.xml").write_text(
-              '<?xml version="1.0" encoding="utf-8"?>\n'
-              '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-              '  <background android:drawable="@color/royal_skye_icon_background"/>\n'
-              '  <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
-              '</adaptive-icon>\n'
-          )
-          (adaptive / "ic_launcher_round.xml").write_text(
-              '<?xml version="1.0" encoding="utf-8"?>\n'
-              '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-              '  <background android:drawable="@color/royal_skye_icon_background"/>\n'
-              '  <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
-              '</adaptive-icon>\n'
-          )
+          nl = chr(10)
+          adaptive_xml = nl.join([
+              '<?xml version="1.0" encoding="utf-8"?>',
+              '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">',
+              '  <background android:drawable="@color/royal_skye_icon_background"/>',
+              '  <foreground android:drawable="@mipmap/ic_launcher_foreground"/>',
+              '</adaptive-icon>',
+          ]) + nl
+          (adaptive / "ic_launcher.xml").write_text(adaptive_xml)
+          (adaptive / "ic_launcher_round.xml").write_text(adaptive_xml)
           colors = root / "values"
           colors.mkdir(parents=True, exist_ok=True)
-          (colors / "royal_skye_icon.xml").write_text(
-              '<?xml version="1.0" encoding="utf-8"?>\n'
-              '<resources><color name="royal_skye_icon_background">#101820</color></resources>\n'
-          )
+          color_xml = nl.join([
+              '<?xml version="1.0" encoding="utf-8"?>',
+              '<resources><color name="royal_skye_icon_background">#101820</color></resources>',
+          ]) + nl
+          (colors / "royal_skye_icon.xml").write_text(color_xml)
           print("Generated Android launcher icons from public/images/logo.jpg")
           PY
           python - <<'PY'
