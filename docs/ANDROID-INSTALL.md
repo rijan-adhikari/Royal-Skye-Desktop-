@@ -1,11 +1,27 @@
-# Installing Royal Skye on Android
+# Installing Royal Skye Android
 
-1. Open the private repository's Releases page while signed in to a GitHub account with access: https://github.com/rijan-adhikari/Royal-Skye-Desktop-/releases
-2. Open the version you want and download the asset named `Royal-Skye-vX.Y.Z-android-debug.apk`.
-3. On Android 10 or newer, open the downloaded APK from Downloads / Files.
-4. If Android prompts you, allow the browser or Files app to install unknown apps, then return to the installer and tap Install.
-5. Open Royal Skye. On the login screen, enter the restaurant host PC's private LAN address, for example `http://192.168.1.10:8000`, and save it. The phone and host must be on the same trusted Wi-Fi/LAN.
+## Install the APK
 
-The first v1.0.0 build is a debug-signed early-access APK. Android may show a warning because it is installed outside Play Store. Do not install APKs from unofficial mirrors.
+1. Download the APK from the private repository's Releases page: https://github.com/rijan-adhikari/Royal-Skye-Desktop-/releases
+2. Open it from Downloads / Files on Android 10 or newer.
+3. If Android prompts you, allow the browser or Files app to install unknown apps, then return to the installer and tap Install.
+4. Open Royal Skye. The app starts at the real staff login screen; it does not open a sample/demo workspace.
 
-For the first release, an owner-controlled permanent Android signing key has not yet been configured in GitHub Actions. Treat this as a test installation; a future APK signed with a different key cannot update this installation in place. Back up restaurant data before replacing test builds.
+## Trust the restaurant's private LAN certificate
+
+The Android app blocks cleartext HTTP. Before connecting to the restaurant PC, the owner must provision the local HTTPS certificate on that PC using `app/backend/scripts/generate-lan-tls.py`.
+
+Copy only `royal-skye-local-ca.crt` to the phone. Install it from Android Settings → Security / Privacy → Encryption & credentials → Install a certificate → CA certificate (menu wording varies). Do not copy or distribute either private `.key` file.
+
+## Connect to the restaurant host
+
+1. Keep the phone and restaurant PC on the same trusted private Wi-Fi/LAN.
+2. On the login screen, enter `https://HOST-LAN-IP:8443` using the reserved LAN IP printed by the host setup.
+3. Tap **Test connection**. It must report that both the API and database are connected.
+4. Sign in with an existing staff account from the migrated restaurant database.
+
+## Signing and production status
+
+The current GitHub Actions build is debug-signed for installation and acceptance testing. A permanent owner-controlled Android signing key must be created and configured as GitHub Actions secrets before stable production updates; otherwise a future APK signed with another key cannot update this installation in place.
+
+Do not process live restaurant transactions until the local database has been imported and reconciled, staff login and permissions have been tested, and the owner has accepted the backup/restore and printer workflows. Keep the original website and source database unchanged until the owner approves cutover.

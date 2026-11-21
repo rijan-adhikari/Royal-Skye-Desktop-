@@ -42,13 +42,40 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
+          import xml.etree.ElementTree as ET
           version = Path("../VERSION").read_text().splitlines()[0].strip()
           major, minor, patch = (int(part) for part in version.split("."))
           version_code = major * 10000 + minor * 100 + patch
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           xml = manifest.read_text()
-          xml = xml.replace("<application", '<application android:usesCleartextTraffic="true"', 1)
+          start = xml.index("<application")
+          end = xml.index(">", start)
+          tag = xml[start:end]
+          for attr, value in {
+              "usesCleartextTraffic": "false",
+              "networkSecurityConfig": "@xml/network_security_config",
+              "allowBackup": "false",
+          }.items():
+              pattern = rf'android:{attr}="[^"]*"'
+              if re.search(pattern, tag):
+                  tag = re.sub(pattern, f'android:{attr}="{value}"', tag, count=1)
+              else:
+                  tag += f' android:{attr}="{value}"'
+          xml = xml[:start] + tag + xml[end:]
+          ET.fromstring(xml)
           manifest.write_text(xml)
+          network_config = Path("android/app/src/main/res/xml/network_security_config.xml")
+          network_config.parent.mkdir(parents=True, exist_ok=True)
+          network_config.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="false">
+                  <trust-anchors>
+                      <certificates src="system" />
+                      <certificates src="user" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          """)
           gradle = Path("android/app/build.gradle")
           content = gradle.read_text()
           content, code_count = re.subn(r"versionCode\s+\d+", f"versionCode {version_code}", content, count=1)
@@ -63,6 +90,19 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+      - name: Verify APK signature and Android package metadata
+        working-directory: app/frontend/android
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BUILD_TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          test -s "$APK"
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/royal-skye-apk-badging.txt
+          grep -q "package: name='com.royalskye.restaurant'" /tmp/royal-skye-apk-badging.txt
+          grep -q "sdkVersion:'23'" /tmp/royal-skye-apk-badging.txt
+          sha256sum "$APK" | tee "$GITHUB_WORKSPACE/royal-skye-apk.sha256"
       - name: Prepare versioned release asset
         run: |
           cp app/frontend/android/app/build/outputs/apk/debug/app-debug.apk "Royal-Skye-v${{ steps.version.outputs.version }}-android-debug.apk"

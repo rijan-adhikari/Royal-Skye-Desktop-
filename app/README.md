@@ -1,4 +1,4 @@
-# Royal Skye Desktop, Linux and Android
+# Royal Skye Windows, Debian and Android clients
 
 This is the separate cross-platform client project for Royal Skye Restaurant.
 
@@ -8,31 +8,31 @@ This is the separate cross-platform client project for Royal Skye Restaurant.
 - Debian/Linux desktop packages using Tauri 2.
 - Android 10+ APK using Capacitor.
 
-The React source under this folder is imported from the production website to preserve its screens, branding, theme system, loading experience and workflows.
+The React source under this folder contains the real restaurant website workflows, themes, language settings, branding, loading experience and role-based screens. The Android entry point is the staff login screen; sample/demo routes are not part of the application.
 
 ## Build locally
 
 From app/frontend:
 
-```bash
-npm install
-npm run build
-npm run desktop:build
-```
+    npm install
+    npm run build
+    npm run desktop:build
 
 Android project generation:
 
-```bash
-npx cap add android
-npx cap sync android
-cd android
-./gradlew assembleDebug
-```
+    npx cap add android
+    npx cap sync android
+    cd android
+    ./gradlew assembleDebug
 
-The GitHub Actions workflow builds Windows, Linux and Android artifacts and publishes them as workflow artifacts.
+The GitHub Actions workflow builds Windows, Linux and Android artifacts.
 
-## Important release notes
+## Local backend
 
-The first Android workflow artifact is a debug-signed APK intended for installation/testing, not the final long-term production signing identity. A permanent release keystore must be generated and backed up by the owner; its password and key must be stored only in GitHub Actions secrets, never committed or pasted into chat.
+The restaurant PC runs the FastAPI host and PostgreSQL database. Android/desktop clients connect to the host over HTTPS on the private LAN. See docs/LOCAL-HOST-SETUP.md.
 
-The native packaging shell is not the local restaurant server. Backend installation, database lifecycle, Android LAN pairing, offline sync, printer support, migration and release acceptance remain separate required implementation stages. Do not use this build for live billing until those stages pass.
+## Release notes
+
+CI debug-signed APKs are for installation and acceptance testing. A permanent owner-controlled signing keystore must be generated and stored in GitHub Actions secrets before stable production updates. Never commit the keystore or its passwords.
+
+The APK is a real client, but an APK build alone does not migrate the live website database or install the restaurant-PC host. Complete the local database import/reconciliation and operational acceptance checklist before live billing.

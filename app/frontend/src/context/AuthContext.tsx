@@ -34,7 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.clear();
+    // Clear only authentication state. Keep the saved restaurant LAN host,
+    // theme, language and other device preferences across sign-outs.
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("fullName");
     setToken(null);
     setRole(null);
     setFullName(null);

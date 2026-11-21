@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getServerBaseUrl, setServerBaseUrl } from "../api/client";
+import { api, apiErrorMessage, getServerBaseUrl, setServerBaseUrl } from "../api/client";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [serverUrl, setServerUrl] = useState(getServerBaseUrl() || (window.location.hostname === "tauri.localhost" ? "http://127.0.0.1:8000" : ""));
   const [connectionMessage, setConnectionMessage] = useState("");
+  const [testingConnection, setTestingConnection] = useState(false);
   const isNativeClient = window.location.hostname === "localhost" || window.location.hostname === "tauri.localhost";
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -22,14 +23,37 @@ export default function Login() {
     }
   };
 
+  const testConnection = async () => {
+    setTestingConnection(true);
+    setConnectionMessage("");
+    try {
+      setServerBaseUrl(serverUrl);
+      const response = await api.get("/api/health", { timeout: 8000 });
+      if (response.data?.status !== "ok" || response.data?.database !== "connected") {
+        throw new Error("The host responded, but its database is not ready.");
+      }
+      setConnectionMessage("Restaurant host and database are online. You can sign in.");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setConnectionMessage(typeof detail === "string" ? detail : err?.message || "Could not reach the restaurant host. Check its IP address and make sure both devices share the same LAN.");
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
+      if (isNativeClient) {
+        if (!serverUrl.trim()) throw new Error("Enter the restaurant host HTTPS address before signing in.");
+        setServerBaseUrl(serverUrl);
+      }
       await login(username, password);
       navigate("/dashboard");
-    } catch {
-      setError("Invalid username or password");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      setError(status === 401 ? "Invalid username or password." : apiErrorMessage(err, "Could not sign in to Royal Skye."));
     }
   };
 
@@ -207,11 +231,11 @@ export default function Login() {
                 <div className="mb-5 rounded-xl border border-[#65e6c2]/15 bg-[#65e6c2]/[.045] p-3">
                   <label htmlFor="rs-server-url" className="mb-2 block text-[9px] font-semibold tracking-[.14em] text-[#9fb9b1]">RESTAURANT SERVER ADDRESS</label>
                   <div className="flex gap-2">
-                    <input id="rs-server-url" inputMode="url" autoCapitalize="none" autoCorrect="off" className="rs-login-input min-w-0 flex-1 rounded-lg px-3 py-2 text-xs" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://192.168.1.10:8000" />
+                    <input id="rs-server-url" inputMode="url" autoCapitalize="none" autoCorrect="off" className="rs-login-input min-w-0 flex-1 rounded-lg px-3 py-2 text-xs" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="https://192.168.1.10:8443" />
                     <button type="button" onClick={saveServer} className="rounded-lg border border-[#65e6c2]/35 px-3 text-[9px] font-bold tracking-[.08em] text-[#65e6c2] hover:bg-[#65e6c2]/10">SAVE</button>
                   </div>
-                  <p className="mt-2 text-[9px] leading-4 text-[#78908c]">Enter the local IP address shown on the restaurant host PC. Both devices must be on the same private Wi-Fi/LAN.</p>
-                  {connectionMessage && <p role="status" className="mt-1 text-[9px] text-[#65e6c2]">{connectionMessage}</p>}
+                  <p className="mt-2 text-[9px] leading-4 text-[#78908c]">Install the Royal Skye CA certificate on this phone first, then enter the host IP using https://HOST-IP:8443. Both devices must be on the same private Wi-Fi/LAN.</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><p role="status" className="min-w-0 flex-1 text-[9px] leading-4 text-[#65e6c2]">{connectionMessage || "Test the host before signing in to confirm the local database is ready."}</p><button type="button" disabled={testingConnection} onClick={testConnection} className="rounded-lg bg-[#65e6c2]/10 px-3 py-2 text-[9px] font-bold tracking-[.08em] text-[#65e6c2] disabled:opacity-50">{testingConnection ? "TESTING…" : "TEST CONNECTION"}</button></div>
                 </div>
               )}
               {error && <p role="alert" className="mb-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-xs text-red-300">{error}</p>}

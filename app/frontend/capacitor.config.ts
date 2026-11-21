@@ -5,6 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Royal Skye',
   webDir: 'dist',
   bundledWebRuntime: false,
-  server: { androidScheme: 'http' },
+  server: { androidScheme: 'https' },
 };
 export default config;

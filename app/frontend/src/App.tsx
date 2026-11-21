@@ -137,6 +137,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<LoadingScreen />}><Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <Login />} />
       <Route
         path="/dashboard"
@@ -199,7 +200,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes></Suspense>
   );
 }
