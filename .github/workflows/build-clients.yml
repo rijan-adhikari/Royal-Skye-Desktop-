@@ -35,7 +35,7 @@ jobs:
           python -m pip install -r requirements.txt pytest
       - name: Compile backend modules
         working-directory: app/backend
-        run: python -m compileall -q app
+        run: python -m compileall -q app scripts
       - name: Run backend unit tests
         working-directory: app/backend
         env:
