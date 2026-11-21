@@ -49,7 +49,8 @@ def main() -> None:
     args = parser.parse_args()
 
     host_ip = ipaddress.ip_address(args.ip) if args.ip else detect_lan_ip()
-    if not isinstance(host_ip, ipaddress.IPv4Address) or host_ip.is_loopback or host_ip.is_link_local:
+    if (not isinstance(host_ip, ipaddress.IPv4Address) or not host_ip.is_private
+            or host_ip.is_loopback or host_ip.is_link_local):
         raise SystemExit("Use the restaurant PC's private LAN IPv4 address.")
 
     cert_dir = Path(__file__).resolve().parents[1] / "certs"
