@@ -105,13 +105,25 @@ jobs:
           npx cap sync android
           python - <<'PY'
           from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           xml = manifest.read_text()
-          xml = xml.replace(
-              "<application",
-              '<application android:usesCleartextTraffic="false" android:networkSecurityConfig="@xml/network_security_config" android:allowBackup="false"',
-              1,
-          )
+          start = xml.index("<application")
+          end = xml.index(">", start)
+          tag = xml[start:end]
+          for name, value in {
+              "usesCleartextTraffic": "false",
+              "networkSecurityConfig": "@xml/network_security_config",
+              "allowBackup": "false",
+          }.items():
+              pattern = rf'android:{name}="[^"]*"'
+              if re.search(pattern, tag):
+                  tag = re.sub(pattern, f'android:{name}="{value}"', tag, count=1)
+              else:
+                  tag += f' android:{name}="{value}"'
+          xml = xml[:start] + tag + xml[end:]
+          ET.fromstring(xml)
           manifest.write_text(xml)
           network_config = Path("android/app/src/main/res/xml/network_security_config.xml")
           network_config.parent.mkdir(parents=True, exist_ok=True)
