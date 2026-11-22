@@ -10,7 +10,7 @@ export default function Login() {
   const [connectionMessage, setConnectionMessage] = useState("");
   const isNativeClient = window.location.hostname === "localhost" || window.location.hostname === "tauri.localhost";
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, startDemo } = useAuth();
   const navigate = useNavigate();
 
   const saveServer = () => {
@@ -218,6 +218,8 @@ export default function Login() {
               <button type="submit" className="rs-login-button w-full rounded-xl py-3 text-xs font-extrabold tracking-[.13em]">
                 ACCESS WORKSPACE <span className="ml-2" aria-hidden="true">↗</span>
               </button>
+              <button type="button" onClick={() => { startDemo(); navigate("/dashboard", { replace: true }); }} className="mt-3 w-full rounded-xl border border-[#d7b17b]/40 bg-[#d7b17b]/[.08] px-4 py-3 text-[11px] font-extrabold tracking-[.12em] text-[#e8c99f] transition hover:bg-[#d7b17b]/[.15]">OPEN OFFLINE DEMO <span className="ml-2" aria-hidden="true">→</span></button>
+              <p className="mt-2 text-center text-[9px] leading-4 text-[#8fa29d]">No server or database required. Sample data only; nothing is sent to the restaurant.</p>
               <div className="mt-6 flex items-center justify-between border-t border-white/[.08] pt-4 text-[9px] tracking-[.12em] text-[#6e8580]">
                 <span>ENCRYPTED SESSION</span><span className="text-[#65e6c2]">● SECURE LOGIN</span>
               </div>
