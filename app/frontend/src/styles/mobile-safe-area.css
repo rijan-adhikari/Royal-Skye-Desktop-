@@ -1,0 +1,19 @@
+/* Android/Capacitor safe areas and touch-first viewport sizing. */
+html, body, #root { min-height: 100%; }
+html { min-height: 100dvh; overscroll-behavior-y: none; }
+body { min-height: 100dvh; min-width: 320px; }
+button, a, input, select, textarea { touch-action: manipulation; }
+.rs-app-shell { min-height: 100dvh; padding-top: env(safe-area-inset-top, 0px); }
+.rs-app-shell main { min-width: 0; padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+.rs-demo { min-height: 100dvh; padding-top: env(safe-area-inset-top, 0px); }
+.rs-demo main { padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px)); }
+.rs-demo-nav { padding-bottom: calc(.45rem + env(safe-area-inset-bottom, 0px)); }
+.rs-login { min-height: 100dvh; padding-top: max(1.5rem, env(safe-area-inset-top, 0px)); padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 767px) {
+  .rs-app-shell main > div:first-child { min-height: 0; }
+  .rs-app-shell main .mx-auto.w-full.max-w-\[1600px\] { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+  input, select, textarea { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
