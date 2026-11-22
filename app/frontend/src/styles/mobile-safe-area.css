@@ -17,3 +17,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.rs-live-mobile-nav { padding-bottom: calc(.45rem + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 1023px) {
+  .rs-app-shell main { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+}
