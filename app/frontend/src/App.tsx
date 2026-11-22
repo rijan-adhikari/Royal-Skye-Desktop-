@@ -129,6 +129,19 @@ function Shell({ children }: { children: React.ReactNode }) {
           </footer>
         </div>
       </main>
+      <nav aria-label="Primary navigation" className="rs-live-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-[#273a38] bg-[#091114]/95 px-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,.24)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
+          {workspace.slice(0, 3).map(item => {
+            const active = location.pathname === item.to.split("?")[0];
+            return <Link key={item.to} to={item.to} className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[9px] font-bold ${active ? "bg-white/[.08] text-[#f1c98d]" : "text-[#b7aaa1]"}`}>
+              <NavGlyph name={item.icon} active={active}/><span>{item.label}</span>
+            </Link>;
+          })}
+          <button onClick={() => setMobileOpen(true)} className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[9px] font-bold text-[#b7aaa1]">
+            <span className="text-lg leading-[18px]">☰</span><span>More</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
