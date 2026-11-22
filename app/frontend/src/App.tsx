@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 import { useLanguage } from "./context/LanguageContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingScreen from "./components/LoadingScreen";
+import DemoWorkspace from "./pages/DemoWorkspace";
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Tables = lazy(() => import("./pages/Tables"));
@@ -133,7 +134,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { token } = useAuth();
+  const { token, demoMode } = useAuth();
+  if (demoMode) return <DemoWorkspace />;
 
   return (
     <Suspense fallback={<LoadingScreen />}><Routes>
