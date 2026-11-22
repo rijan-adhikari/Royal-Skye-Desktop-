@@ -7,6 +7,8 @@ interface AuthState {
   token: string | null;
   role: Role | null;
   fullName: string | null;
+  demoMode: boolean;
+  startDemo: () => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -17,6 +19,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [role, setRole] = useState<Role | null>(localStorage.getItem("role") as Role | null);
   const [fullName, setFullName] = useState<string | null>(localStorage.getItem("fullName"));
+  const [demoMode, setDemoMode] = useState<boolean>(localStorage.getItem("royal-skye-demo-mode") === "true");
+
+  const startDemo = () => {
+    localStorage.setItem("token", "royal-skye-local-demo-session");
+    localStorage.setItem("role", "admin");
+    localStorage.setItem("fullName", "Demo Manager");
+    localStorage.setItem("royal-skye-demo-mode", "true");
+    setToken("royal-skye-local-demo-session");
+    setRole("admin");
+    setFullName("Demo Manager");
+    setDemoMode(true);
+  };
 
   const login = async (username: string, password: string) => {
     const form = new URLSearchParams();
@@ -25,6 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await api.post("/api/auth/login", form, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
+    localStorage.removeItem("royal-skye-demo-mode");
+    setDemoMode(false);
     localStorage.setItem("token", res.data.access_token);
     localStorage.setItem("role", res.data.role);
     localStorage.setItem("fullName", res.data.full_name);
@@ -39,13 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("fullName");
+    localStorage.removeItem("royal-skye-demo-mode");
+    setDemoMode(false);
     setToken(null);
     setRole(null);
     setFullName(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, role, fullName, login, logout }}>
+    <AuthContext.Provider value={{ token, role, fullName, demoMode, startDemo, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
